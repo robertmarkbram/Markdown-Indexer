@@ -1,0 +1,24 @@
+#
+# Each markdown URL created for files found under the ${application.path-to-markdown-files} directory will be run 
+# through this process:
+#
+# 1. Subtract ${application.path-to-markdown-files} from the file's absolute path.
+# 2. Run the result through all find-replace sequences in this file  in the order in which they appear.
+# 3. Prefix the result with ${application.webapp-base-url}.
+#
+
+find=.md$
+replace=
+
+find=\\
+replace=/
+
+# Remove all trailing and leading space.
+find=^\s*(\S.*\S)\s*$
+replace=$1
+
+# Hugo specific.
+# - Replace "/index.md" with "".
+# - the ".md" was already replaced with "".
+find=/index$
+replace=

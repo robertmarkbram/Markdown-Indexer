@@ -1,0 +1,30 @@
+#
+# Each markdown file found under the ${application.path-to-markdown-files} directory will be run through this process:
+#
+# 1. Subtract ${application.path-to-markdown-files} from the file's absolute path.
+# 2. Run the path through all find-replace sequences in this file  in the order in which they appear.
+#
+
+
+find=-
+replace= ;;;
+
+find=_
+replace= - ;;;
+
+find=.md$
+replace= ;;;
+
+find=[\\/]
+replace= - ;;;
+
+# Remove all trailing and leading space.
+find=^\s*(\S.*\S)\s*$
+replace=$1
+
+# Hugo specific.
+# - Replace "/index.md" with "".
+# - the "/" was already replaced with " - ".
+# - the ".md" was already replaced with "".
+find= - index$
+replace=

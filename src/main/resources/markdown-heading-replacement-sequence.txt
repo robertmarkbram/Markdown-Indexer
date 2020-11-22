@@ -1,0 +1,35 @@
+#
+# Each heading found in markdown files will be run through this process:
+#
+# 1. A heading is any line starting with "#" - as the first character on the line.
+#
+# 2. Pass the heading through all find-replace sequences in this file in the order in which they appear.
+#
+# 3. If the result of this translation is a blank string, the line will be ignored and no shortcut created. Use this 
+#       mechanism to filter out headings you do not want to create shortcuts for. 
+#
+# 4. Replace all space with a hyphen.
+#
+# 5. Change all to lower case.
+#
+# 6. Remove any characters matching [^a-z0-9-].
+#
+# 4. Add the result to the processed file name to create a new URL shortcut.
+#
+
+# Don't generate shortcuts for first level headings. There should only be one first level heading per doc and the 
+# shortcut for that will already be represented by the shortcut for the file itself.  
+find=^# .*
+replace=
+
+find=^#+\s+(\S.*)$
+replace=$1
+
+# Remove all trailing and leading space.
+find=^\s*(\S.*\S)\s*$
+replace=$1
+
+# ROB SPECIFIC.  Don't make a shortcut for the history section.
+find=^#*\s+History\s*
+replace=
+

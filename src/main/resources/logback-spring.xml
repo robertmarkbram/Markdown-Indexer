@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+   <property name="LOGS" value="./logs"/>
+
+   <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+         <Pattern>%date [%thread] %level %logger{10} [%file:%line] - %M - %msg%n</Pattern>
+      </encoder>
+   </appender>
+
+   <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>${LOGS}/hugo-export-urls.log</file>
+      <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+         <Pattern>%date [%thread] %level %logger{100} [%file:%line] - %M - %msg%n</Pattern>
+      </encoder>
+
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+         <!-- rollover daily and when the file reaches 10 MegaBytes -->
+         <fileNamePattern>${LOGS}/hugo-export-urls-%d{yyyy-MM-dd}.%i.log
+         </fileNamePattern>
+         <timeBasedFileNamingAndTriggeringPolicy
+               class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <maxFileSize>10MB</maxFileSize>
+         </timeBasedFileNamingAndTriggeringPolicy>
+      </rollingPolicy>
+   </appender>
+
+   <!-- LOG everything at INFO level -->
+   <root level="WARN">
+      <appender-ref ref="RollingFile"/>
+      <appender-ref ref="Console"/>
+   </root>
+
+   <!-- LOG "org.rmb.md.indexer*" at DEBUG level -->
+   <logger name="org.rmb.md.indexer" level="debug" additivity="false">
+      <appender-ref ref="RollingFile"/>
+      <appender-ref ref="Console"/>
+   </logger>
+
+   <!-- <logger name="org.rmb.md.indexer.regex" level="trace"/> -->
+
+</configuration>
