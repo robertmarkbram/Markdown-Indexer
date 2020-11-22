@@ -2,11 +2,12 @@ package org.rmb.md.indexer.regex;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,23 +34,9 @@ public final class ReplacementSequence {
     *
     * @param path string path to file with find/replace strings.
     *
-    * @throws IOException        IO exception if we cannot read the file
-    * @throws URISyntaxException the uri syntax exception if we cannot create URL to file from <code>path</code>
+    * @throws IOException IO exception if we cannot read the file
     */
-   public ReplacementSequence(final String path) throws IOException, URISyntaxException {
-      this(Paths.get(ReplacementSequence.class.getResource(path).toURI()));
-   }
-
-   /**
-    * Create replacement sequence from {@link Path} to replacement sequence file.
-    *
-    * @param path path to file with find/replace strings
-    *
-    * @throws IOException           IO exception if we cannot read the file
-    * @throws IllegalStateException if the file contains an uneven list of them, or a {@link Replacement#PREFIX_REPLACE}
-    *                               before a {@link Replacement#PREFIX_FIND}.
-    */
-   public ReplacementSequence(final Path path) throws IOException {
+   public ReplacementSequence(final String path) throws IOException {
       this(readReplacements(path));
    }
 
@@ -71,8 +58,8 @@ public final class ReplacementSequence {
     *
     * @throws IOException the io exception if there is a problem reading from a file.
     */
-   private static List<Replacement> readReplacements(final Path path) throws IOException {
-      final var lines = Files.readAllLines(path).stream()
+   private static List<Replacement> readReplacements(final String path) throws IOException {
+      final var lines = readLines(path).stream()
             .filter(ReplacementSequence::isFindReplaceLine).collect(Collectors.toList());
       if (lines.size() % 2 != 0) {
          throw new IllegalArgumentException("List of find/replace strings was uneven ("
@@ -88,6 +75,22 @@ public final class ReplacementSequence {
    }
 
    /**
+    * Read lines from a file (or resource within a jar).
+    *
+    * @param path the path
+    *
+    * @return list of lines from the file
+    *
+    * @throws IOException if we cannot read from the file
+    */
+   private static List<String> readLines(final String path) throws IOException {
+      try (InputStream resource = ReplacementSequence.class.getResourceAsStream(path)) {
+         return new BufferedReader(new InputStreamReader(resource,
+               StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
+      }
+   }
+
+   /**
     * Is find replace line boolean.
     *
     * @param line the line to be tested
@@ -97,6 +100,19 @@ public final class ReplacementSequence {
     */
    private static boolean isFindReplaceLine(final String line) {
       return isNotBlank(line) && (line.startsWith(PREFIX_FIND) || line.startsWith(PREFIX_REPLACE));
+   }
+
+   /**
+    * Create replacement sequence from {@link Path} to replacement sequence file.
+    *
+    * @param path path to file with find/replace strings
+    *
+    * @throws IOException           IO exception if we cannot read the file
+    * @throws IllegalStateException if the file contains an uneven list of them, or a {@link Replacement#PREFIX_REPLACE}
+    *                               before a {@link Replacement#PREFIX_FIND}.
+    */
+   public ReplacementSequence(final Path path) throws IOException {
+      this(readReplacements(path.toAbsolutePath().toString()));
    }
 
    /**

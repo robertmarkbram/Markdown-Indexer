@@ -6,7 +6,10 @@ plugins {
 
 group = 'org.rmb'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '15'
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_15
+}
 
 configurations {
     compileOnly {
@@ -29,11 +32,13 @@ repositories {
 }
 
 dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:2.4.0')
     implementation 'org.springframework.boot:spring-boot-starter'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    compile 'org.apache.commons:commons-lang3:3.11'
+    implementation 'org.apache.commons:commons-lang3:3.11'
 }
 
 test {

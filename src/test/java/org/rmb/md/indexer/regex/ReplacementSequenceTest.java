@@ -39,7 +39,7 @@ class ReplacementSequenceTest {
     * Test simple regex replace.
     */
    @Test
-   void testSimpleReqex() {
+   void testSimpleRegex() {
       final var find = "^.*$";
       final var replace = "rob";
       var replacementSequence = new ReplacementSequence(List.of(
@@ -53,7 +53,7 @@ class ReplacementSequenceTest {
     * Test regex replace with back-references.
     */
    @Test
-   void testBackReferenceReqex() {
+   void testBackReferenceRegex() {
       final var find = "(\\w++) (\\w++) (\\w++)";
       final var replace = "$3 $2 $1";
       var replacementSequence = new ReplacementSequence(List.of(
@@ -67,7 +67,7 @@ class ReplacementSequenceTest {
     * Test multiple regular expressions in a sequence.
     */
    @Test
-   void testReqexSequence() {
+   void testRegexSequence() {
       var replacementSequence = new ReplacementSequence(List.of(
             new Replacement("(\\w++) (\\w++) (\\w++)", "$3 $2 $1"),
             new Replacement("^[\\s]*", ""),

@@ -4,7 +4,7 @@
 
 Run this over a directory of markdown files to generate a set of URL shortcut links for them that can be indexed by a program such as [KeyPirinha](https://keypirinha.com/).
 
-Will read each file and create anchor based shortcuts for each heading too.
+Will read each file and create an anchor based shortcuts for each heading too.
 
 ## Build 
 
@@ -46,7 +46,7 @@ Default replacement sequence files:
 
 Notes about these files.
 
-1. The listed files above are defaults only. You can override them by providing your own path to them in a properties file.
+1. The listed files above are defaults only. You can override them by providing your own path to them in the properties file.
 2. The only lines that matter are those that start with one of these
 
     ```

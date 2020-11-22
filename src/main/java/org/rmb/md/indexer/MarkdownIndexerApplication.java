@@ -2,15 +2,16 @@ package org.rmb.md.indexer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.rmb.md.indexer.config.ApplicationProperties;
 import org.rmb.md.indexer.regex.ReplacementSequence;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * can be indexed with a program such as <a href="https://keypirinha.com/">KeyPirinha</a>.
  */
 @SpringBootApplication
+@EnableConfigurationProperties(ApplicationProperties.class)
 @Slf4j
 public class MarkdownIndexerApplication implements CommandLineRunner {
 
@@ -42,40 +44,9 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
    public static final PathMatcher HUGO_URL_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**Hugo - *.url");
 
    /**
-    * Path to folder containing markdown files that we will index.
+    * The Application properties.
     */
-   @Value("${application.path-to-markdown-files}")
-   private String pathToMarkdownFiles;
-
-   /**
-    * File containing replacement sequence to apply to each markdown path found.
-    */
-   @Value("${application.path-to-markdown-file-replacement-sequence}")
-   private String pathToMarkdownFileReplacementSequence;
-
-   /**
-    * File containing replacement sequence to apply to each markdown URL output.
-    */
-   @Value("${application.markdown-url-replacement-sequence}")
-   private String pathToMarkdownUrlReplacementSequence;
-
-   /**
-    * File containing replacement sequence to apply to each markdown heading found.
-    */
-   @Value("${application.path-to-markdown-heading-replacement-sequence}")
-   private String pathToMarkdownHeadingReplacementSequence;
-
-   /**
-    * The Path to where we will write URL files to.
-    */
-   @Value("${application.path-to-urls}")
-   private String pathToUrls;
-
-   /**
-    * Base URL for some webapp (like Hug) that serves the markdown files as content.
-    */
-   @Value("${application.webapp-base-url}")
-   private String webappBaseUrl;
+   private ApplicationProperties applicationProperties;
 
    /**
     * The replacement sequence to apply against markdown paths.
@@ -92,6 +63,16 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
     */
    private ReplacementSequence replacementSequenceHeadings;
 
+   /**
+    * Instantiates a new Markdown indexer application.
+    *
+    * @param applicationProperties the application properties
+    */
+   @Autowired
+   public MarkdownIndexerApplication(final ApplicationProperties applicationProperties) {
+      this.applicationProperties = applicationProperties;
+   }
+
    public static void main(String[] args) {
       SpringApplication.run(MarkdownIndexerApplication.class, args).close();
    }
@@ -103,12 +84,15 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
                    path to markdown file: {}
                    web-app base URL: {}
                    path to URL folder: {}
-                """, pathToMarkdownFiles, webappBaseUrl, pathToUrls);
+                """,
+            applicationProperties.getPathToMarkdownFiles(),
+            applicationProperties.getWebappBaseUrl(),
+            applicationProperties.getPathToUrls());
 
       init();
       deleteShortcuts();
 
-      try (Stream<Path> files = Files.walk(Paths.get(pathToMarkdownFiles))) {
+      try (Stream<Path> files = Files.walk(Paths.get(applicationProperties.getPathToMarkdownFiles()))) {
 
          // traverse all files and sub-folders
          files.map(Path::toAbsolutePath)
@@ -126,19 +110,19 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
     * Initialise required state.
     */
    private void init() {
-      replacementSequenceMd =
-            readMdReplacementSequence("markdown files", pathToMarkdownFileReplacementSequence).orElseThrow();
-      replacementSequenceUrl =
-            readMdReplacementSequence("markdown URLs", pathToMarkdownUrlReplacementSequence).orElseThrow();
-      replacementSequenceHeadings =
-            readMdReplacementSequence("markdown headings", pathToMarkdownHeadingReplacementSequence).orElseThrow();
+      replacementSequenceMd = readMdReplacementSequence("markdown files",
+            applicationProperties.getPathToMarkdownFileReplacementSequence()).orElseThrow();
+      replacementSequenceUrl = readMdReplacementSequence("markdown URLs",
+            applicationProperties.getPathToMarkdownUrlReplacementSequence()).orElseThrow();
+      replacementSequenceHeadings = readMdReplacementSequence("markdown headings",
+            applicationProperties.getPathToMarkdownHeadingReplacementSequence()).orElseThrow();
    }
 
    /**
     * Delete current Hugo shortcuts.
     */
    private void deleteShortcuts() {
-      try (Stream<Path> files = Files.walk(Paths.get(pathToUrls))) {
+      try (Stream<Path> files = Files.walk(Paths.get(applicationProperties.getPathToUrls()))) {
          files.filter(HUGO_URL_MATCHER::matches)
                .forEach(path -> {
                   log.debug("Delete file: {}", path);
@@ -207,7 +191,7 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
          var replacementSequence = new ReplacementSequence(path);
          log.debug("Found replacements for {}: {}", label, replacementSequence);
          return Optional.of(replacementSequence);
-      } catch (IOException | URISyntaxException e) {
+      } catch (IOException e) {
          log.error("FATAL: failed to create replacement sequence for " + label + ".", e);
          return Optional.empty();
       }
@@ -221,10 +205,12 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
    private void createShortcutForMarkdownFile(final Path path) {
       log.trace("Path: {}", path);
       var fileName = "Hugo - " +
-            replacementSequenceMd.apply(path.toAbsolutePath().toString().replace(pathToMarkdownFiles + "\\", ""))
+            replacementSequenceMd.apply(path.toAbsolutePath().toString().replace(
+                  applicationProperties.getPathToMarkdownFiles() + "\\", ""))
             + ".url";
-      var url = webappBaseUrl
-            + replacementSequenceUrl.apply(path.toAbsolutePath().toString().replace(pathToMarkdownFiles + "\\", ""));
+      var url = applicationProperties.getWebappBaseUrl()
+            + replacementSequenceUrl.apply(path.toAbsolutePath().toString().replace(
+            applicationProperties.getPathToMarkdownFiles() + "\\", ""));
       createShortcutForMarkdownFile(fileName, url);
       createShortcutForMarkdownFileHeaders(path, fileName, url);
    }
@@ -242,7 +228,7 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
       // Write out URL file.
       try {
          Files.write(
-               Paths.get(pathToUrls, fileName),
+               Paths.get(applicationProperties.getPathToUrls(), fileName),
                ("""
                 [InternetShortcut]
                 URL=""" + url).getBytes());
@@ -318,7 +304,7 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
       // Write out URL file.
       try {
          Files.write(
-               Paths.get(pathToUrls,
+               Paths.get(applicationProperties.getPathToUrls(),
                      headingFileName),
                ("""
                 [InternetShortcut]

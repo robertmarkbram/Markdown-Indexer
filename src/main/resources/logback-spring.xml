@@ -33,7 +33,7 @@
    </root>
 
    <!-- LOG "org.rmb.md.indexer*" at DEBUG level -->
-   <logger name="org.rmb.md.indexer" level="debug" additivity="false">
+   <logger name="org.rmb.md.indexer" level="info" additivity="false">
       <appender-ref ref="RollingFile"/>
       <appender-ref ref="Console"/>
    </logger>
