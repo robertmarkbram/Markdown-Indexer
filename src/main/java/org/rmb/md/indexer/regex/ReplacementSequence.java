@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,14 +78,25 @@ public final class ReplacementSequence {
    /**
     * Read lines from a file (or resource within a jar).
     *
-    * @param path the path
+    * @param filePath path to file; could be absolute or relative
     *
     * @return list of lines from the file
     *
     * @throws IOException if we cannot read from the file
     */
-   private static List<String> readLines(final String path) throws IOException {
-      try (InputStream resource = ReplacementSequence.class.getResourceAsStream(path)) {
+   private static List<String> readLines(final String filePath) throws IOException {
+      // If path exists as is (probably absolute) then read it as a file.
+      final var path = Path.of(filePath);
+      if (Files.exists(path)) {
+         log.debug("File exists. Will read as file. {}", filePath);
+         return Files.readAllLines(path);
+      }
+      // Treat file as a resource in a Jar. 
+      log.debug("Attempting to read read as resource: {}", filePath);
+      try (InputStream resource = ReplacementSequence.class.getResourceAsStream(filePath)) {
+         if (resource == null) {
+            log.warn("Failed to load resource: {}", filePath);
+         }
          return new BufferedReader(new InputStreamReader(resource,
                StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
       }
