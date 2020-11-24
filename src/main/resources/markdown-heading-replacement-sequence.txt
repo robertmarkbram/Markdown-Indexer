@@ -28,8 +28,3 @@ replace=$1
 # Remove all trailing and leading space.
 find=^\s*(\S.*\S)\s*$
 replace=$1
-
-# ROB SPECIFIC.  Don't make a shortcut for the history section.
-find=^#*\s+History\s*
-replace=
-
