@@ -138,33 +138,49 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
    }
 
    /**
-    * Do I want this file?
+    * Create shortcut file - with the <code>url</code> extension.
     *
-    * @param path that I may wish to ignore.
-    *
-    * @return true if I want to ignore this path
+    * @param fileName base name of file which will be created in the <code>application.path-to-urls</code> directory.
+    * @param url      base URL that the shortcut will point to
+    * @param heading  the heading for which a new file name and url will be created, building on <code>fileName</code>
+    *                 and <code >url</code>
     */
-   private boolean wantThisFile(final Path path) {
-      log.trace("Checking if I want this path: {}", path.toAbsolutePath().toString());
-      // Only want markdown files.
-      if (!MD_MATCHER.matches(path)) {
-         return false;
-      }
+   private void createShortcutForMarkdownHeader(final String fileName, final String url, final String heading) {
+      log.debug("URL file name: {}", fileName);
+      log.debug("URL: {}", url);
+      log.debug("Heading: {}", heading);
 
-      // Hard-coded file names I don't want.
-      if (switch (path.getFileName().toString()) {
-         case "_index.md", "_footer.md" -> true;
-         default -> false;
-      }) {
-         return false;
-      }
+      /*
+         1. Apply heading replacement sequence.
+         2. Replace all space with a hyphen.
+         3. Change all to lower case.
+         4. Remove any characters matching [^a-z0-9-]
+       */
 
-      // Check other sorts of files I don't want.
-      final var fileName = path.toAbsolutePath().toString();
-      return !fileName.endsWith("java.md")
-            && !fileName.endsWith("yml.md")
-            && !fileName.contains(File.separator + "current-issue" + File.separator);
-      // OK, use it.
+      final var headingFileName = fileName.replaceAll(".url$", "") + " - "
+            + heading.replaceAll("[^a-zA-Z0-9- ]", "")
+            + ".url";
+      log.debug("Heading file name: {}", headingFileName);
+
+      final var headingUrl = url + ".html#" + replacementSequenceHeadings.apply(heading)
+            .trim()
+            .replaceAll(" ", "-")
+            .toLowerCase()
+            .replaceAll("[^a-z0-9-]", "");
+      log.debug("Heading URL: {}", headingUrl);
+
+
+      // Write out URL file.
+      try {
+         Files.write(
+               Paths.get(applicationProperties.getPathToUrls(),
+                     headingFileName),
+               ("""
+                [InternetShortcut]
+                URL=""" + headingUrl).getBytes());
+      } catch (IOException e) {
+         log.error("Failed to write URL file for path {}", fileName, e);
+      }
    }
 
    /**
@@ -269,49 +285,34 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
    }
 
    /**
-    * Create shortcut file - with the <code>url</code> extension.
+    * Do I want this file?
     *
-    * @param fileName base name of file which will be created in the <code>application.path-to-urls</code> directory.
-    * @param url      base URL that the shortcut will point to
-    * @param heading  the heading for which a new file name and url will be created, building on <code>fileName</code>
-    *                 and <code >url</code>
+    * @param path that I may wish to ignore.
+    *
+    * @return true if I want to ignore this path
     */
-   private void createShortcutForMarkdownHeader(final String fileName, final String url, final String heading) {
-      log.debug("URL file name: {}", fileName);
-      log.debug("URL: {}", url);
-      log.debug("Heading: {}", heading);
-
-      /* 
-         1. Apply heading replacement sequence. 
-         2. Replace all space with a hyphen.
-         3. Change all to lower case.
-         4. Remove any characters matching [^a-z0-9-]
-       */
-
-      final var headingFileName = fileName.replaceAll(".url$", "") + " - "
-            + heading.replaceAll("[^a-zA-Z0-9- ]", "")
-            + ".url";
-      log.debug("Heading file name: {}", headingFileName);
-
-      final var headingUrl = url + "/#" + replacementSequenceHeadings.apply(heading)
-            .trim()
-            .replaceAll(" ", "-")
-            .toLowerCase()
-            .replaceAll("[^a-z0-9-]", "");
-      log.debug("Heading URL: {}", headingUrl);
-
-
-      // Write out URL file.
-      try {
-         Files.write(
-               Paths.get(applicationProperties.getPathToUrls(),
-                     headingFileName),
-               ("""
-                [InternetShortcut]
-                URL=""" + headingUrl).getBytes());
-      } catch (IOException e) {
-         log.error("Failed to write URL file for path {}", fileName, e);
+   private boolean wantThisFile(final Path path) {
+      log.trace("Checking if I want this path: {}", path.toAbsolutePath().toString());
+      // Only want markdown files.
+      if (!MD_MATCHER.matches(path)) {
+         return false;
       }
+
+      // Hard-coded file names I don't want.
+      if (switch (path.getFileName().toString()) {
+         case "_index.md", "_footer.md" -> true;
+         default -> false;
+      }) {
+         return false;
+      }
+
+      // Check other sorts of files I don't want.
+      final var fileName = path.toAbsolutePath().toString();
+      return !fileName.endsWith("java.md")
+            && !fileName.endsWith("yml.md")
+            && !fileName.contains(".history")
+            && !fileName.contains(File.separator + "current-issue" + File.separator);
+      // OK, use it.
    }
 
 }
