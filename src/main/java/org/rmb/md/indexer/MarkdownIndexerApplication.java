@@ -234,10 +234,11 @@ public class MarkdownIndexerApplication implements CommandLineRunner {
    /**
     * Create shortcut file - with the <code>url</code> extension.
     *
-    * @param fileName name of file which will be created in the <code>application.path-to-urls</code> directory
-    * @param url      URL that the shortcut will point to
+    * @param fileName   name of file which will be created in the <code>application.path-to-urls</code> directory
+    * @param urlInitial the url initial, prior ta suffixing it with ".html".
     */
-   private void createShortcutForMarkdownFile(final String fileName, final String url) {
+   private void createShortcutForMarkdownFile(final String fileName, final String urlInitial) {
+      final String url = urlInitial + ".html";
       log.debug("URL file name: {}", fileName);
       log.debug("URL: {}", url);
 
